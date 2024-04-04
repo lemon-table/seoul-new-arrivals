@@ -5,6 +5,7 @@ dotenv.config();
 // 환경변수로부터 데이터베이스 설정을 불러옵니다.
 const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
   host: process.env.DB_HOST,
+  port: process.env.DB_PORT, 
   dialect: 'postgres', // 사용하는 데이터베이스에 맞게 설정
 });
 
