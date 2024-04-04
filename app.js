@@ -2,9 +2,9 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import dotEnv from "dotenv";
 import cors from "cors";
-import router from "./routes/index.js";
-import ErrorHandlingMiddleware from "./middlewares/error-handling.middleware.js"
-import sequelize from './models/index.js'; 
+import router from "./src/routes/index.js";
+import ErrorHandlingMiddleware from "./src/middlewares/error-handling.middleware.js"
+import sequelize from './src/models/index.js'; 
 
 //.env에 있는 여러 값들을, prosess.env 객체 안에 추가하게 된다.
 dotEnv.config();
