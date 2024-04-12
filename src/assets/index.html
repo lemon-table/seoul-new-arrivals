@@ -1,9 +1,42 @@
 <!--index.html-->
 <!DOCTYPE html>
-<html>
-
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>서울신상</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
 <body>
-    <h1>Hello world!</h1>
+    <h1>서울신상</h1>
+    <header>
+        <!-- 검색창 구간 -->
+        <div class="search">
+            <input type="date" class="date-picker" id="start-date">
+            <input type="date" class="date-picker" id="end-date">
+            <input type="text" placeholder="검색어 입력">
+            <button type="submit">검색</button>
+        </div>
+    </header>
+    <main>
+        <!-- 지도 구간 -->
+        <div class="map-section">
+            <h2>지도 산책</h2>
+            <p>기간: 최근 1년</p>
+            <!-- 실제 프로젝트에서는 지도 API를 사용하여 지도를 동적으로 로드합니다 -->
+            <img src="https://t1.daumcdn.net/cfile/tistory/2636C73D568B80CF2F" alt="서울시 지도">
+        </div>
+        <!-- 추가 콘텐츠 구간 -->
+        <aside>
+            <h2>관련 정보</h2>
+            <!-- 추가적인 정보를 위한 섹션, 예를 들면 날씨 정보, 산책 추천 루트 등 -->
+        </aside>
+    </main>
+    <footer>
+        <!-- 푸터 구간 -->
+        <div class="footer-content">
+            <p>© 2024 서울신상. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="script/scripts.js"></script>
 </body>
-
 </html>
