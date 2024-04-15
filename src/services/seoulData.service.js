@@ -8,7 +8,7 @@ const API_PATH = '/json/LOCALDATA_072218';
 
 // API로부터 데이터를 가져오는 함수
 const fetchData = async (startIdx, endIdx) => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = process.env.SEOUL_DATA_API_KEY;
   const response = await axios.get(`${API_BASE_URL}/${apiKey}${API_PATH}/${startIdx}/${endIdx}`);
   const data = response.data.LOCALDATA_072218.row;
   return data;
