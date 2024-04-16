@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>서울신상</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=2ef405ac4a76b8b780aeb750dceeec8b"></script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=2ef405ac4a76b8b780aeb750dceeec8b&libraries=services"></script>
 </head>
 <body>
     <h1>서울신상</h1>
@@ -22,17 +22,25 @@
         <!-- 지도 구간 -->
         <div class="map-section">
             <h2>지도 산책</h2>
-            <p>기간: 최근 1년</p>
             <!-- 지도를 표시할 div 입니다 -->
-            <div id="map" style="width:100%;height:350px;"></div>
-            <!-- 실제 프로젝트에서는 지도 API를 사용하여 지도를 동적으로 로드합니다 -->
-            <!--<img src="https://t1.daumcdn.net/cfile/tistory/2636C73D568B80CF2F" alt="서울시 지도"> -->
+            <div id="map">
+                <div class="hAddr">
+                    <span class="title">지도중심기준 행정동 주소정보</span>
+                    <span id="centerAddr"></span>
+                </div>
+            </div>
+            <button id="relocate" style="position: absolute; bottom: 20px; left: 150px;">
+                <img src="img/compass.png" alt="내 위치 다시 조회" style="width: 30px; height: 30px;"/>
+            </button>
+
         </div>
         <!-- 추가 콘텐츠 구간 -->
-        <aside>
+        <div class="info-section" style="width: 30%;">
             <h2>관련 정보</h2>
-            <!-- 추가적인 정보를 위한 섹션, 예를 들면 날씨 정보, 산책 추천 루트 등 -->
-        </aside>
+            <ul id="storeList">
+                <!-- 여기에 가게 정보 항목이 추가됩니다 -->
+            </ul>
+        </div>
     </main>
     <footer>
         <!-- 푸터 구간 -->
