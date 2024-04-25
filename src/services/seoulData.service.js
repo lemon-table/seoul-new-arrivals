@@ -1,10 +1,79 @@
 import SeoulData from '../models/seoulData.js'; // 모델 import
 import axios from 'axios';
 import dotenv from 'dotenv';
+import Sequelize from 'sequelize'; 
+import proj4 from 'proj4';
 dotenv.config();
 
 const API_BASE_URL = 'http://openapi.seoul.go.kr:8088';
 const API_PATH = '/json/LOCALDATA_072218';
+
+const KAKAO_API_KEY = process.env.KAKAO_MAP_API_KEY;
+const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY;
+const KAKAO_API_URL = 'https://dapi.kakao.com/v2/local/search/address.json';
+
+
+// 주소로부터 좌표를 찾는 함수
+// async function getCoordinatesFromAddress(address) {
+//   try {
+//     const response = await axios.get(KAKAO_API_URL, {
+//       headers: {
+//         Authorization: `KakaoAK ${KAKAO_API_KEY}`
+//       },
+//       params: { query: address }
+//     });
+
+//     const addressData = response.data.documents[0];
+//     return {
+//       x: parseFloat(addressData.x),
+//       y: parseFloat(addressData.y)
+//     };
+//   } catch (error) {
+//     console.error('Failed to get coordinates from address:', error);
+//     return { x: null, y: null };
+//   }
+// }
+
+const getCoordinatesFromAddress = async (originalAddress) => {
+  //const API_KEY = process.env.KAKAO_API_KEY; // 환경변수에서 API 키를 불러옵니다.
+  let address = originalAddress;
+  let maxAttempts = 3; // 최대 시도 횟수
+  let attempt = 0;
+
+  if(address===null) return null;
+
+  while (attempt < maxAttempts) {
+    try {
+
+      const url = `https://dapi.kakao.com/v2/local/search/address.json`;
+      const response = await axios.get(url, {
+        headers: { Authorization: `KakaoAK ${KAKAO_REST_API_KEY}` },
+        params: { query: address }
+      });
+
+      if (response.data.documents.length > 0) {
+        const { x, y } = response.data.documents[0];
+        return [parseFloat(x), parseFloat(y)];
+      } else {
+        // 주소의 마지막 부분을 제거
+        const parts = address.trim().split(" ");
+        if (parts.length > 1) {
+          parts.pop(); // 마지막 요소 제거
+          address = parts.join(" ");
+        } else {
+          // 더 이상 제거할 부분이 없을 때
+          throw new Error('주소에 해당하는 좌표 정보를 찾을 수 없습니다.');
+        }
+      }
+    } catch (error) {
+      if (attempt === maxAttempts - 1) { // 마지막 시도에서도 실패한 경우
+        console.error(`좌표 변환 실패: ${originalAddress}`, error);
+        return null;
+      }
+    }
+    attempt++;
+  }
+};
 
 // API로부터 데이터를 가져오는 함수
 const fetchData = async (startIdx, endIdx) => {
@@ -34,10 +103,52 @@ function toISOStringOrNull(dateString) {
   }
 }
 
+function isValidCoordinate(value) {
+  return typeof value === 'number' && isFinite(value);
+}
 
 // 데이터를 데이터베이스에 삽입 또는 업데이트하는 함수
 const saveOrUpdateData = async (data) => {
   for (const item of data) {
+
+    //const coordinates = await getCoordinatesFromAddress(item.SITEWHLADDR);
+
+    // TM 좌표계 정의 (여기서는 EPSG:5186 예시로 사용)
+    const projTM = "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs";
+
+    // WGS84 좌표계 정의
+    const projWGS84 = "EPSG:4326";
+
+
+    const x = parseFloat(item.X);
+    const y = parseFloat(item.Y);
+
+    // 좌표 유효성 검사
+    if (!isValidCoordinate(x) || !isValidCoordinate(y)) {
+      console.error(`Invalid coordinates for item: ${item}`);
+      continue; // 유효하지 않은 좌표는 처리를 건너뜁니다.
+    }
+
+    // TM에서 WGS84로 좌표 변환
+    //const [lon, lat] = proj4(projTM, projWGS84, [x, y]);
+
+    let addressToUse = item.SITEWHLADDR; // 기본적으로 SITEWHLADDR 사용
+    if (!addressToUse) {
+        addressToUse = item.RDNWHLADDR; // SITEWHLADDR가 없을 경우 RDNWHLADDR 사용
+    }
+
+    // 주소를 기반으로 좌표를 가져옵니다.
+
+    const coordinates = await getCoordinatesFromAddress(item.SITEWHLADDR);
+
+    if (!coordinates) {
+      console.error(`좌표를 찾을 수 없음: ${item.SITEWHLADDR}`);
+      continue; // 유효한 좌표가 없으면 이 데이터를 건너뜁니다.
+    }
+
+    const [lon, lat] = coordinates;
+    //const [lon, lat] = await getCoordinatesFromAddress(addressToUse);
+
     await SeoulData.upsert({
       // 컬럼 매핑
       opnsfteamcode: item.OPNSFTEAMCODE,
@@ -58,8 +169,8 @@ const saveOrUpdateData = async (data) => {
       updategbn: !isNaN(parseFloat(item.UPDATEGBN)) ? parseFloat(item.UPDATEGBN) : null,
       updatedt: toISOStringOrNull(item.UPDATEDT),
       uptaenm: item.UPTAENM,
-      x: toFloatOrNull(item.X),
-      y: toFloatOrNull(item.Y),
+      x: lon,
+      y: lat,
       sntuptaenm: item.SNTUPTAENM,
       // 다른 컬럼들도 필요에 따라 이와 같은 방식으로 추가합니다.
       // ...
@@ -97,4 +208,60 @@ const retrieveAndSaveData = async () => {
   }
 };
 
-export { retrieveAndSaveData };
+// 가게 정보를 조회하는 서비스 함수
+// const getStoreInfo = async () => {
+//   try {
+//     // SeoulData 모델을 사용하여 가게 이름, 주소, 좌표 데이터를 조회합니다.
+//     const storeInfo = await SeoulData.findAll({
+//       attributes: ['bplcnm', 'sitewhladdr', 'x', 'y'],
+//       where: {
+//         trdstatenm: '영업/정상' // 가게 상태가 영업/정상인 경우만 조회
+//       },
+//       limit: 30
+//     });
+
+//     // 조회된 데이터를 반환
+//     return storeInfo.map(info => ({
+//       name: info.bplcnm, // 가게 이름
+//       address: info.sitewhladdr, // 가게 주소
+//       coordinates: {
+//         x: info.x, // x 좌표
+//         y: info.y // y 좌표
+//       }
+//     }));
+//   } catch (error) {
+//     console.error('Error fetching store information:', error);
+//     throw error;
+//   }
+// };
+
+const getStoreInfo = async (minLat, minLng, maxLat, maxLng) => {
+  try {
+    // 지리 공간 쿼리를 위한 where 조건 구성
+    const whereCondition = {
+      trdstatenm: '영업/정상',
+      x: { [Sequelize.Op.between]: [parseFloat(minLng), parseFloat(maxLng)] },
+      y: { [Sequelize.Op.between]: [parseFloat(minLat), parseFloat(maxLat)] }
+    };
+
+    // SeoulData 모델을 사용하여 가게 이름, 주소, 좌표 데이터를 조회합니다.
+    const storeInfo = await SeoulData.findAll({
+      attributes: ['bplcnm', 'sitewhladdr', 'x', 'y'],
+      where: whereCondition,
+      limit: 30
+    });
+
+    // 조회된 데이터를 반환
+    return storeInfo.map(info => ({
+      name: info.bplcnm,
+      address: info.sitewhladdr,
+      coordinates: { x: info.x, y: info.y }
+    }));
+  } catch (error) {
+    console.error('Error fetching store information:', error);
+    throw error;
+  }
+};
+
+
+export { retrieveAndSaveData,getStoreInfo };
