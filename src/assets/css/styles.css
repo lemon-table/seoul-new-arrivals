@@ -81,6 +81,7 @@ main {
     transition: transform 0.3s; /* 애니메이션 효과 */
     padding-right: 30px; /* 오른쪽 패딩을 더 크게 설정하여 확대했을 때 스크롤이 생기지 않도록 함 */
     box-sizing: border-box; /* 박스 크기 계산 방식을 변경하여 패딩을 너비에 포함 */
+    text-align: left;
 }
 
 #storeList li:hover {
@@ -122,7 +123,7 @@ main {
     background: url('https://s3.ap-northeast-2.amazonaws.com/cdn.wecode.co.kr/icon/search.png') no-repeat right 12px center, white; /* 배경 이미지 설정 */
     background-size: 17px; /* 이미지 크기 조정 */
 }
-.date-picker {
+.date-picker, .search select {
     flex-grow: 0;
     flex-basis: 165px;
     border: 1px solid #bbb;
@@ -153,4 +154,12 @@ main {
     cursor: pointer;
     outline: none;
     z-index: 1;
+}
+.search select {
+    width: auto; /* 콤보박스 너비 자동 조정 */
+    appearance: none; /* 기본 브라우저 스타일 제거 */
+    background-image: url('https://cdn-icons-png.flaticon.com/512/271/271210.png'); /* 콤보박스 화살표 이미지 */
+    background-size: 12px 12px; /* 화살표 이미지 크기 조정 */
+    background-position: right 10px center; /* 배경 이미지 위치 조정 */
+    background-repeat: no-repeat; /* 배경 이미지 반복 방지 */
 }

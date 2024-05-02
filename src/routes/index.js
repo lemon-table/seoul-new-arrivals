@@ -1,7 +1,7 @@
 import express from "express";
 import UsersRouter from "./users.router.js";
 import AuthRouter from "./auth.router.js";
-import { retrieveAndSaveData,getStoreInfo } from '../services/seoulData.service.js'; 
+import { retrieveAndSaveData,getStoreInfo,getSearchData } from '../services/seoulData.service.js'; 
 
 const router = express.Router();
 
@@ -28,6 +28,17 @@ router.get("/seoul-data",async(req,res) =>{
   } catch (error) {
     console.error('서울 데이터 업데이트 중 오류 발생:', error);
     res.status(500).json({ message: "서울 데이터 조회 중 오류가 발생했습니다.", error: error.toString() });
+  }
+});
+
+router.get("/search",async(req,res) =>{
+  try {
+    const { start_date, end_date, status, keyword } = req.query; // 검색 조건
+    const result = await getSearchData(start_date, end_date, status, keyword);
+    res.status(200).json({ data : result,message: "서울 데이터가 검색되었습니다." });
+  } catch (error) {
+    console.error('서울 데이터 검색 중 오류 발생:', error);
+    res.status(500).json({ message: "서울 데이터 검색 중 오류가 발생했습니다.", error: error.toString() });
   }
 });
 

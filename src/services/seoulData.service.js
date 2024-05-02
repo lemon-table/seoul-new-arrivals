@@ -6,7 +6,9 @@ import proj4 from 'proj4';
 dotenv.config();
 
 const API_BASE_URL = 'http://openapi.seoul.go.kr:8088';
-const API_PATH = '/json/LOCALDATA_072218';
+const API_PATH = '/json/LOCALDATA_072218'; // 제과영업점
+// API 경로를 배열로 설정
+const API_PATHS = ['/json/LOCALDATA_072218', '/json/LOCALDATA_072404'];
 
 const KAKAO_API_KEY = process.env.KAKAO_MAP_API_KEY;
 const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY;
@@ -82,6 +84,14 @@ const fetchData = async (startIdx, endIdx) => {
   const data = response.data.LOCALDATA_072218.row;
   return data;
 };
+
+// fetchData 함수 수정: API 경로를 파라미터로 받음 (API_PATHS용)
+// const fetchData = async (apiPath, startIdx, endIdx) => {
+//   const apiKey = process.env.SEOUL_DATA_API_KEY;
+//   const response = await axios.get(`${API_BASE_URL}/${apiKey}${apiPath}/${startIdx}/${endIdx}`);
+//   const data = response.data[apiPath.split('/')[2]].row; // 동적으로 데이터 키 접근
+//   return data;
+// };
 
 // 유효한 날짜 문자열인지 검사하는 함수
 function isValidDateString(dateString) {
@@ -208,6 +218,35 @@ const retrieveAndSaveData = async () => {
   }
 };
 
+// 전체 데이터를 가져와서 데이터베이스에 저장하는 함수
+// const retrieveAndSaveData = async () => {  //(API_PATHS용)
+//   try {
+//     for (const apiPath of API_PATHS) { // 각 API 경로에 대해 반복
+//       let startIdx = 1;
+//       let endIdx = 1000; // API 요청 당 최대 개수
+//       let isCompleted = false;
+
+//       while (!isCompleted) {
+//         const data = await fetchData(apiPath, startIdx, endIdx);
+//         await saveOrUpdateData(data);
+
+//         // 데이터가 더이상 없을 때 반복 중단
+//         if (data.length < 1000) {
+//           isCompleted = true;
+//         }
+
+//         // 인덱스 업데이트
+//         startIdx += 1000;
+//         endIdx += 1000;
+//       }
+//       isCompleted = false; // 다음 경로를 위해 초기화
+//     }
+//   } catch (error) {
+//     console.error('Failed to retrieve or save data', error);
+//     throw error;
+//   }
+// };
+
 // 가게 정보를 조회하는 서비스 함수
 // const getStoreInfo = async () => {
 //   try {
@@ -263,5 +302,53 @@ const getStoreInfo = async (minLat, minLng, maxLat, maxLng) => {
   }
 };
 
+// 검색 조건에 맞는 데이터를 조회하는 함수
+const getSearchData = async (start_date, end_date, status, keyword) => {
+  try {
+    // 검색 조건을 담는 Sequelize where 객체
+    const whereCondition = {};
 
-export { retrieveAndSaveData,getStoreInfo };
+    // 날짜 조건 처리
+    if (start_date && end_date) {
+      whereCondition.apvpermynd = {
+        [Sequelize.Op.between]: [new Date(start_date), new Date(end_date)]
+      };
+    }
+
+    // 영업 상태 조건 처리
+    if (status && status !== 'all') {
+      whereCondition.trdstatenm = status;
+    }
+
+    // 키워드 조건 처리 (가게 이름 또는 주소 포함)
+    if (keyword) {
+      whereCondition[Sequelize.Op.or] = [
+        { bplcnm: { [Sequelize.Op.like]: `%${keyword}%` } },
+        { sitewhladdr: { [Sequelize.Op.like]: `%${keyword}%` } }
+      ];
+    }
+
+    // 데이터 조회
+    const storeInfo = await SeoulData.findAll({
+      attributes: ['bplcnm', 'sitewhladdr', 'x', 'y'],
+      where: whereCondition,
+      limit: 30 // 조회할 데이터 수 제한
+    });
+
+    // 조회된 데이터를 적절히 가공하여 반환
+    return storeInfo.map(info => ({
+      name: info.bplcnm,
+      address: info.sitewhladdr,
+      coordinates: {
+        x: info.x,
+        y: info.y
+      }
+    }));
+  } catch (error) {
+    console.error('Error fetching store information with search criteria:', error);
+    throw error; // 에러를 외부로 전달
+  }
+};
+
+
+export { retrieveAndSaveData,getStoreInfo, getSearchData };

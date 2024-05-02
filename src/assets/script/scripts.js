@@ -1,13 +1,9 @@
-// var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
-// mapOption = { 
-//     center: new kakao.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
-//     level: 3 // 지도의 확대 레벨
-// };
-
-// // 지도를 표시할 div와  지도 옵션으로  지도를 생성합니다
-// var map = new kakao.maps.Map(mapContainer, mapOption); 
-
 document.addEventListener('DOMContentLoaded', function() {
+
+    // 검색 버튼 이벤트 리스너 추가
+    const searchButton = document.querySelector('button[type="submit"]');
+    const inputKeyword = document.querySelector('input[type="text"]');
+    const businessStatusSelect = document.getElementById('business-status');
 
     const mapContainer = document.getElementById('map'), // 지도를 표시할 div
     mapOption = {
@@ -29,6 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
         redMarkers.forEach(marker => marker.setMap(null));
         redMarkers = [];
     }
+
+    
 
     // 마커 생성을 위한 함수 정의
     function createMarkerAtPosition(position, centerMap = true) {
@@ -73,23 +71,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 빨간색 마커 생성
-    // function createRedMarker(store) {
-    //     const position = new kakao.maps.LatLng(store.coordinates.y, store.coordinates.x);
-    //     const redMarker = new kakao.maps.Marker({
-    //         position: position,
-    //         map: map,
-    //         image: new kakao.maps.MarkerImage(
-    //             'http://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
-    //             new kakao.maps.Size(24, 35)
-    //         )
-    //     });
-    
-    //     kakao.maps.event.addListener(redMarker, 'click', function() {
-    //         createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}});
-    //         map.setCenter(position);
-    //     });
-    // }
+    // 검색 버튼 이벤트
+    searchButton.addEventListener('click', async function() {
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        const businessStatus = businessStatusSelect.value;
+        const keyword = inputKeyword.value;
+
+        try {
+            // API 요청 URL 구성
+            const url = new URL('http://localhost:3008/api/search');
+            // URLSearchParams를 사용하여 쿼리 파라미터를 구성
+            const params = new URLSearchParams({
+                start_date: startDate,
+                end_date: endDate,
+                status: businessStatus,
+                keyword: keyword
+            });
+            url.search = params.toString();
+
+            // Fetch API를 사용하여 데이터 요청
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('서버 응답이 올바르지 않습니다.');
+            const data = await response.json();
+
+            // 여기에서 응답 데이터를 처리 (예: 지도에 마커 추가, 목록 업데이트 등)
+            console.log(data); // 콘솔에 결과 출력
+        } catch (error) {
+            console.error('데이터 검색 중 에러 발생:', error);
+        }
+    });
+
     function createRedMarker(store) {
         const position = new kakao.maps.LatLng(store.coordinates.y, store.coordinates.x);
         const marker = new kakao.maps.Marker({
@@ -97,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             map: map,
             image: new kakao.maps.MarkerImage(
                 'http://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
-                new kakao.maps.Size(24, 35)
+                new kakao.maps.Size(24, 30)
             )
         });
 
@@ -225,58 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }    
     }
 
-    // API에서 가게 데이터를 불러오는 함수
-    // async function fetchStoreData() {
-    //     try {
-    //         const response = await fetch('http://localhost:3008/api/seoul-data');
-    //         const data = await response.json();
-
-    //         // 데이터가 성공적으로 로드되면 DOM에 삽입
-    //         if (data && data.data) {
-    //             const stores = data.data;
-    //             const listElement = document.getElementById('storeList');
-
-    //             stores.forEach(store => {
-    //                 const listItem = document.createElement('li');
-    //                 listItem.textContent = `${store.name} - ${store.address} - (${store.coordinates.y}, ${store.coordinates.x})`;
-
-    //                     listItem.addEventListener('click', function() {
-    //                         // 리스트 항목 클릭 시 실행될 함수
-    //                         const position = new kakao.maps.LatLng(store.coordinates.y, store.coordinates.x);
-    //                         map.setCenter(position); // 지도 중심을 클릭한 가게 위치로 이동
-                            
-    //                         createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}}); // 마커 생성 함수 호출
-    //                     });
-
-    //                 listElement.appendChild(listItem);
-    //             });
-    //         }
-    //     } catch (error) {
-    //         console.error('Failed to fetch store data:', error);
-    //     }
-    // }
-
-    // async function fetchStoreData() {
-    //     // 지도의 현재 중심 좌표를 가져옵니다.
-    //     const center = map.getCenter();
-    //     const level = map.getLevel();
-
-    //     // API 요청을 위해 현재 지도의 범위를 계산
-    //     const swLatLng = new kakao.maps.LatLng(center.La - 0.01, center.Ma - 0.01);
-    //     const neLatLng = new kakao.maps.LatLng(center.La + 0.01, center.Ma + 0.01);
-
-    //     try {
-    //         const response = await fetch(`http://localhost:3008/api/seoul-data?minLat=${swLatLng.La}&minLng=${swLatLng.Ma}&maxLat=${neLatLng.La}&maxLng=${neLatLng.Ma}`);
-    //         const data = await response.json();
-
-    //         if (data && data.data) {
-    //             updateStoreList(data.data); // 화면에 데이터를 업데이트하는 함수
-    //         }
-    //     } catch (error) {
-    //         console.error('Failed to fetch store data:', error);
-    //     }
-    // }
-
     // 데이터 불러오기 및 마커 업데이트
     async function fetchStoreData() {
         clearRedMarkers(); // 기존 마커 제거
@@ -296,89 +256,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // function updateStoreList(stores) {
-    //     const listElement = document.getElementById('storeList');
-    //     listElement.innerHTML = ''; // 기존 리스트를 클리어
-
-    //     stores.forEach(store => {
-    //         const listItem = document.createElement('li');
-    //         listItem.textContent = `${store.name} - ${store.address} - (${store.coordinates.y}, ${store.coordinates.x})`;
-    //         listItem.addEventListener('click', function() {
-    //             const position = new kakao.maps.LatLng(store.coordinates.y, store.coordinates.x);
-    //             map.setCenter(position); // 지도 중심을 클릭한 가게 위치로 이동
-    //             createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}}); // 마커 생성 함수 호출
-    //         });
-    //         listElement.appendChild(listItem);
-    //     });
-    // }
-
+    // 가게 목록
     function updateStoreList(stores) {
         const listElement = document.getElementById('storeList');
         listElement.innerHTML = ''; // 기존 리스트를 클리어
     
         stores.forEach(store => {
             const listItem = document.createElement('li');
-            listItem.textContent = `${store.name} - ${store.address} - (${store.coordinates.y}, ${store.coordinates.x})`;
+            listItem.innerHTML = `<span style="font-size: 16px;">${store.name}</span><br><span style="font-size: 10px;">${store.address}</span>`;
             listItem.addEventListener('click', function() {
-                //const position = new kakao.maps.LatLng(store.coordinates.y, store.coordinates.x);
-                //map.setCenter(position);
-                createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}},false);
+                createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}}, false);
             });
             listElement.appendChild(listItem);
             createRedMarker(store);
         });
     }
-
-    // 페이지 로드 완료 후 가게 데이터를 불러옵니다.
-    //fetchStoreData();
-
-
-
-    /** 가게 데이터 조회 */
-    // 예시 가게 데이터 배열
-    // const stores = [
-    //     { name: "카페 아이엠", address: "서울시 강남구 역삼동 123-1", lat: 37.500111, lng: 127.033333 },
-    //     { name: "서울 북카페", address: "서울시 서초구 서초동 456-2", lat: 37.495432, lng: 127.028444 },
-    //     { name: "한강 맛집", address: "서울시 영등포구 여의도동 789-3", lat: 37.528311, lng: 126.932521 },
-    //     { name: "망원동 피자", address: "서울시 마포구 망원동 101-4", lat: 37.556122, lng: 126.901123 },
-    //     { name: "홍대 타코", address: "서울시 마포구 서교동 212-5", lat: 37.551231, lng: 126.922567 },
-    //     { name: "이태원 그릴", address: "서울시 용산구 이태원동 334-6", lat: 37.533121, lng: 126.993345 },
-    //     { name: "삼성동 치킨", address: "서울시 강남구 삼성동 667-7", lat: 37.507891, lng: 127.056789 },
-    //     { name: "명동 샐러드", address: "서울시 중구 명동 888-8", lat: 37.563456, lng: 126.982654 },
-    //     { name: "노량진 수산물", address: "서울시 동작구 노량진동 999-9", lat: 37.513123, lng: 126.939876 },
-    //     { name: "강동구 빵집", address: "서울시 강동구 성내동 111-10", lat: 37.529234, lng: 127.123456 },
-    //     { name: "강동구 빵집", address: "서울시 강동구 성내동 111-10", lat: 37.529234, lng: 127.123456 },
-    //     { name: "강동구 빵집", address: "서울시 강동구 성내동 111-10", lat: 37.529234, lng: 127.123456 },
-    //     { name: "강동구 빵집", address: "서울시 강동구 성내동 111-10", lat: 37.529234, lng: 127.123456 },
-    //     { name: "강동구 빵집", address: "서울시 강동구 성내동 111-10", lat: 37.529234, lng: 127.123456 },
-    //     { name: "강동구 빵집", address: "서울시 강동구 성내동 111-10", lat: 37.529234, lng: 127.123456 },
-    //     { name: "강동구 빵집", address: "서울시 강동구 성내동 111-10", lat: 37.529234, lng: 127.123456 },
-    //     { name: "강동구 빵집", address: "서울시 강동구 성내동 111-10", lat: 37.529234, lng: 127.123456 }
-    // ];
-
-    // const storeListElement = document.getElementById('storeList');
-
-    // 가게 데이터를 기반으로 리스트 항목을 생성합니다.
-    // stores.forEach((store) => {
-    //     const listItem = document.createElement('li');
-    //     listItem.textContent = store.name + ' - ' + store.address;
-    //     storeListElement.appendChild(listItem);
-    // });
-
-    // // 가게 데이터를 기반으로 리스트 항목을 생성하고 클릭 이벤트를 설정합니다.
-    // stores.forEach((store, index) => {
-    //     const listItem = document.createElement('li');
-    //     listItem.textContent = store.name + ' - ' + store.address;
-    //     listItem.addEventListener('click', function() {
-    //         // 리스트 항목 클릭 시 실행될 함수
-    //         const position = new kakao.maps.LatLng(store.lat, store.lng);
-    //         map.setCenter(position); // 지도 중심을 클릭한 가게 위치로 이동
-            
-    //         createMarkerAtPosition({coords: {latitude: store.lat, longitude: store.lng}}); // 마커 생성 함수 호출
-    //     });
-    //     storeListElement.appendChild(listItem);
-    // });
-
 
 
     /**  조회 날짜 설정 */ 
@@ -386,12 +278,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const endDatePicker = document.getElementById('end-date');
     // 오늘 날짜를 YYYY-MM-DD 포맷으로 설정
     const today = new Date().toISOString().split('T')[0];
+    const currentDate = new Date();
+    const sixMonthsAgo = new Date(currentDate.setMonth(currentDate.getMonth() - 6));
 
-    startDatePicker.value = today; // 시작일 기본값 설정
-    endDatePicker.value = today; // 종료일 기본값 설정
+    // 날짜를 YYYY-MM-DD 형식으로 포매팅하는 함수
+    function formatDate(date) {
+        let d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
 
-    startDatePicker.setAttribute('min', today); // 시작일 최소값 설정
-    endDatePicker.setAttribute('min', today); // 종료일 최소값 설정
+        if (month.length < 2) 
+            month = '0' + month;
+        if (day.length < 2) 
+            day = '0' + day;
+
+        return [year, month, day].join('-');
+    }
+
+    //startDatePicker.value = today; // 시작일 기본값 설정
+    startDatePicker.value = formatDate(sixMonthsAgo); // 6개월 전
+    endDatePicker.value = formatDate(today); // 종료일 기본값 설정
+
+    startDatePicker.setAttribute('min', sixMonthsAgo ); // 시작일 최소값 설정
+    endDatePicker.setAttribute('min', sixMonthsAgo ); // 종료일 최소값 설정
 
     // 시작일 선택 변경 시
     startDatePicker.addEventListener('change', function() {
