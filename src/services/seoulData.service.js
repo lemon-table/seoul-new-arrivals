@@ -3,6 +3,8 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import Sequelize from 'sequelize'; 
 import proj4 from 'proj4';
+import cheerio from 'cheerio';
+import { JSDOM } from 'jsdom';
 dotenv.config();
 
 const API_BASE_URL = 'http://openapi.seoul.go.kr:8088';
@@ -14,25 +16,107 @@ const KAKAO_API_KEY = process.env.KAKAO_MAP_API_KEY;
 const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY;
 const KAKAO_API_URL = 'https://dapi.kakao.com/v2/local/search/address.json';
 
+const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID;
+const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
 
-// 주소로부터 좌표를 찾는 함수
-// async function getCoordinatesFromAddress(address) {
+
+async function fetchImagesFromNaver(query) {
+  const url = 'https://openapi.naver.com/v1/search/image';
+  try {
+    const response = await axios.get(url, {
+      params: { query, display: 3 },
+      headers: {
+        'X-Naver-Client-Id': NAVER_CLIENT_ID,
+        'X-Naver-Client-Secret': NAVER_CLIENT_SECRET
+      }
+    });
+    return response.data.items.map(item => item.thumbnail);
+  } catch (error) {
+    console.error('Error fetching images from Naver:', error);
+    return [];
+  }
+}
+
+// async function fetchImagesFromNaver(query) {
+//   const url = 'https://openapi.naver.com/v1/search/blog.json';
 //   try {
-//     const response = await axios.get(KAKAO_API_URL, {
+//     const response = await axios.get(url, {
+//       params: { query, display: 3 },
 //       headers: {
-//         Authorization: `KakaoAK ${KAKAO_API_KEY}`
-//       },
-//       params: { query: address }
+//         'X-Naver-Client-Id': NAVER_CLIENT_ID,
+//         'X-Naver-Client-Secret': NAVER_CLIENT_SECRET
+//       }
+//     });
+    
+//     const pageLinks = response.data.items.map(item => item.link);
+//     const imageLinks = await Promise.all(pageLinks.map(link => fetchImagesFromPage(link)));
+//     return imageLinks.flat();
+//   } catch (error) {
+//     console.error('Error fetching web pages from Naver:', error);
+//     return [];
+//   }
+// }
+
+
+// async function fetchImagesFromPage(url) {
+//   try {
+//     const response = await axios.get(url);
+//     const $ = cheerio.load(response.data);  // 변경된 사용법에 맞게 load 함수를 사용
+//     const images = $('img').map((i, el) => $(el).attr('src')).get();
+//     console.log('images:',images);
+//     return images.filter(src => src && (src.includes('.jpg') || src.includes('.png')));
+//   } catch (error) {
+//     console.error(`Error fetching images from page: ${url}`, error);
+//     return [];
+//   }
+// }
+
+// async function fetchImagesFromNaver(query) {
+//   const url = 'https://openapi.naver.com/v1/search/blog.json';
+//   try {
+//     const response = await axios.get(url, {
+//       params: { query, display: 3 },
+//       headers: {
+//         'X-Naver-Client-Id': NAVER_CLIENT_ID,
+//         'X-Naver-Client-Secret': NAVER_CLIENT_SECRET
+//       }
 //     });
 
-//     const addressData = response.data.documents[0];
-//     return {
-//       x: parseFloat(addressData.x),
-//       y: parseFloat(addressData.y)
-//     };
+//     const pageLinks = response.data.items.map(item => item.link);
+//     // 각 페이지에서 이미지 링크를 추출하고 바로 반환
+//     const imageLinksPromises = pageLinks.map(link => fetchImagesFromPage(link));
+//     const imageLinksArrays = await Promise.all(imageLinksPromises);
+//     const flatImageLinks = imageLinksArrays.flat(); // 배열을 평탄화
+//     return flatImageLinks;
 //   } catch (error) {
-//     console.error('Failed to get coordinates from address:', error);
-//     return { x: null, y: null };
+//     console.error('Error fetching web pages from Naver:', error);
+//     return [];
+//   }
+// }
+
+async function fetchImagesFromPage(url) {
+  try {
+    const response = await axios.get(url);
+    const $ = cheerio.load(response.data);
+    const images = $('img').map((i, el) => $(el).attr('src')).get();
+    return images.filter(src => src && (src.includes('.jpg') || src.includes('.png')));
+  } catch (error) {
+    console.error(`Error fetching images from page: ${url}`, error);
+    return [];
+  }
+}
+
+// async function fetchImagesFromPage(url) {
+//   try {
+//     const response = await axios.get(url);
+//     const dom = new JSDOM(response.data);
+//     console.log('dom:',dom);
+//     const images = Array.from(dom.window.document.querySelectorAll('img')).map(img => img.src);
+//     console.log('images:',images);
+//     return images.filter(src => src && (src.includes('.jpg') || src.includes('.png')));
+//   } catch (error) {
+//     console.error(`Error fetching images from page: ${url}`, error);
+//     return [];
 //   }
 // }
 
@@ -84,14 +168,6 @@ const fetchData = async (startIdx, endIdx) => {
   const data = response.data.LOCALDATA_072218.row;
   return data;
 };
-
-// fetchData 함수 수정: API 경로를 파라미터로 받음 (API_PATHS용)
-// const fetchData = async (apiPath, startIdx, endIdx) => {
-//   const apiKey = process.env.SEOUL_DATA_API_KEY;
-//   const response = await axios.get(`${API_BASE_URL}/${apiKey}${apiPath}/${startIdx}/${endIdx}`);
-//   const data = response.data[apiPath.split('/')[2]].row; // 동적으로 데이터 키 접근
-//   return data;
-// };
 
 // 유효한 날짜 문자열인지 검사하는 함수
 function isValidDateString(dateString) {
@@ -159,6 +235,13 @@ const saveOrUpdateData = async (data) => {
     const [lon, lat] = coordinates;
     //const [lon, lat] = await getCoordinatesFromAddress(addressToUse);
 
+    // 이미지 가져오기
+    const images = await fetchImagesFromNaver(item.BPLCNM);
+
+    console.log('save image:',images);
+    console.log('save image[0]:',images[0]);
+    console.log('save image[1]:',images[1]);
+
     await SeoulData.upsert({
       // 컬럼 매핑
       opnsfteamcode: item.OPNSFTEAMCODE,
@@ -182,11 +265,18 @@ const saveOrUpdateData = async (data) => {
       x: lon,
       y: lat,
       sntuptaenm: item.SNTUPTAENM,
+      image_url1: images[0],
+      image_url2: images[1],
+      image_url3: images[2],
       // 다른 컬럼들도 필요에 따라 이와 같은 방식으로 추가합니다.
       // ...
     }, {
       // upsert 메소드는 기본키나 unique 컬럼이 일치할 경우 update, 그렇지 않을 경우 insert를 수행합니다.
-      fields: ['opnsfteamcode', 'mgtno', 'apvpermynd', 'trdstategbn', 'trdstatenm', 'dtlstategbn', 'dtlstatenm', 'dcbymd', 'sitetel', 'sitepostno', 'sitewhladdr', 'rdnwhladdr', 'rdnpostno', 'bplcnm', 'lastmodts', 'updategbn', 'updatedt', 'uptaenm', 'x', 'y', 'sntuptaenm'],
+      fields: ['opnsfteamcode', 'mgtno', 'apvpermynd', 'trdstategbn', 'trdstatenm', 
+                'dtlstategbn', 'dtlstatenm', 'dcbymd', 'sitetel', 'sitepostno', 
+                'sitewhladdr', 'rdnwhladdr', 'rdnpostno', 'bplcnm', 'lastmodts', 
+                'updategbn', 'updatedt', 'uptaenm', 'x', 'y', 
+                'sntuptaenm','image_url1','image_url2','image_url3'],
       returning: false, // 업데이트된 데이터를 반환하지 않음
     });
   }
@@ -198,6 +288,9 @@ const retrieveAndSaveData = async () => {
     let startIdx = 1;
     let endIdx = 1000; // API 요청 당 최대 개수
     let isCompleted = false;
+
+    // const data = await fetchData(1, 10);
+    // await saveOrUpdateData(data);
 
     while (!isCompleted) {
       const data = await fetchData(startIdx, endIdx);
@@ -217,62 +310,6 @@ const retrieveAndSaveData = async () => {
     throw error;
   }
 };
-
-// 전체 데이터를 가져와서 데이터베이스에 저장하는 함수
-// const retrieveAndSaveData = async () => {  //(API_PATHS용)
-//   try {
-//     for (const apiPath of API_PATHS) { // 각 API 경로에 대해 반복
-//       let startIdx = 1;
-//       let endIdx = 1000; // API 요청 당 최대 개수
-//       let isCompleted = false;
-
-//       while (!isCompleted) {
-//         const data = await fetchData(apiPath, startIdx, endIdx);
-//         await saveOrUpdateData(data);
-
-//         // 데이터가 더이상 없을 때 반복 중단
-//         if (data.length < 1000) {
-//           isCompleted = true;
-//         }
-
-//         // 인덱스 업데이트
-//         startIdx += 1000;
-//         endIdx += 1000;
-//       }
-//       isCompleted = false; // 다음 경로를 위해 초기화
-//     }
-//   } catch (error) {
-//     console.error('Failed to retrieve or save data', error);
-//     throw error;
-//   }
-// };
-
-// 가게 정보를 조회하는 서비스 함수
-// const getStoreInfo = async () => {
-//   try {
-//     // SeoulData 모델을 사용하여 가게 이름, 주소, 좌표 데이터를 조회합니다.
-//     const storeInfo = await SeoulData.findAll({
-//       attributes: ['bplcnm', 'sitewhladdr', 'x', 'y'],
-//       where: {
-//         trdstatenm: '영업/정상' // 가게 상태가 영업/정상인 경우만 조회
-//       },
-//       limit: 30
-//     });
-
-//     // 조회된 데이터를 반환
-//     return storeInfo.map(info => ({
-//       name: info.bplcnm, // 가게 이름
-//       address: info.sitewhladdr, // 가게 주소
-//       coordinates: {
-//         x: info.x, // x 좌표
-//         y: info.y // y 좌표
-//       }
-//     }));
-//   } catch (error) {
-//     console.error('Error fetching store information:', error);
-//     throw error;
-//   }
-// };
 
 const getStoreInfo = async (minLat, minLng, maxLat, maxLng) => {
   try {

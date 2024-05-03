@@ -99,6 +99,18 @@ const SeoulData = sequelize.define('SeoulData', {
     type: DataTypes.FLOAT,
     allowNull: true
   },
+  image_url1: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  image_url2: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  image_url3: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   // ...
 }, {
   // 모델 옵션
