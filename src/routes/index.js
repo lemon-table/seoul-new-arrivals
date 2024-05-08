@@ -1,7 +1,7 @@
 import express from "express";
 import UsersRouter from "./users.router.js";
 import AuthRouter from "./auth.router.js";
-import { retrieveAndSaveData,getStoreInfo,getSearchData } from '../services/seoulData.service.js'; 
+import { retrieveAndSaveData,getStoreInfo,getSearchData,getDetailData } from '../services/seoulData.service.js'; 
 
 const router = express.Router();
 
@@ -39,6 +39,18 @@ router.get("/search",async(req,res) =>{
   } catch (error) {
     console.error('서울 데이터 검색 중 오류 발생:', error);
     res.status(500).json({ message: "서울 데이터 검색 중 오류가 발생했습니다.", error: error.toString() });
+  }
+});
+
+router.get('/store-details', async (req, res) => {
+  try {
+      const storeId = req.query.id;
+      const result = await getDetailData(storeId);
+      res.status(200).json({ data : result,message: "상세 데이터가 검색되었습니다." });
+      
+  } catch (error) {
+    console.error('상세 데이터 검색 중 오류 발생:', error);
+    res.status(500).json({ message: "상세 데이터 검색 중 오류가 발생했습니다.", error: error.toString() });
   }
 });
 

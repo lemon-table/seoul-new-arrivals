@@ -322,7 +322,7 @@ const getStoreInfo = async (minLat, minLng, maxLat, maxLng) => {
 
     // SeoulData 모델을 사용하여 가게 이름, 주소, 좌표 데이터를 조회합니다.
     const storeInfo = await SeoulData.findAll({
-      attributes: ['bplcnm', 'sitewhladdr', 'x', 'y'],
+      attributes: ['bplcnm', 'sitewhladdr', 'x', 'y','image_url1'],
       where: whereCondition,
       limit: 30
     });
@@ -331,7 +331,8 @@ const getStoreInfo = async (minLat, minLng, maxLat, maxLng) => {
     return storeInfo.map(info => ({
       name: info.bplcnm,
       address: info.sitewhladdr,
-      coordinates: { x: info.x, y: info.y }
+      coordinates: { x: info.x, y: info.y },
+      image_url : info.image_url1
     }));
   } catch (error) {
     console.error('Error fetching store information:', error);
@@ -387,5 +388,24 @@ const getSearchData = async (start_date, end_date, status, keyword) => {
   }
 };
 
+const getDetailData = async (store_id) => {
 
-export { retrieveAndSaveData,getStoreInfo, getSearchData };
+  try {
+    const storeDetails = await SeoulData.findOne({
+        where: { id: store_id },
+        attributes: ['bplcnm', 'sitewhladdr', 'image_url1', 'image_url2', 'image_url3']
+    });
+
+    if (storeDetails) {
+        res.json(storeDetails);
+    } else {
+        res.status(404).send('Store not found');
+    }
+} catch (error) {
+    console.error('Error fetching store details:', error);
+    res.status(500).send('Internal Server Error');
+}
+}
+
+
+export { retrieveAndSaveData,getStoreInfo, getSearchData, getDetailData };

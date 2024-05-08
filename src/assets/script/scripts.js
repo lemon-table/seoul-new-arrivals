@@ -1,3 +1,14 @@
+// 팝업 열기
+function openPopup() {
+    document.getElementById('popup').style.display = 'block';
+}
+
+// 팝업 닫기
+function closePopup() {
+    document.getElementById('popup').style.display = 'none';
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
 
     // 검색 버튼 이벤트 리스너 추가
@@ -21,6 +32,71 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let redMarkers = [];
 
+    // 글로벌 변수로 커스텀 오버레이를 추적
+    let currentOverlay = null;
+
+    document.getElementById('close-popup-btn').addEventListener('click', closePopup);
+
+    function createCustomOverlay(data) {
+        // var detailAddr = !!address ? '<div>주소 : ' + address + '</div>' : '';
+
+        // // 예시 이미지 URL, 실제 사용시에는 적절한 이미지 URL로 대체하세요.
+        // var imageUrl = image_url;
+
+        // console.log('image_url:',imageUrl);
+
+        // var content = '<div class="wrap">' +
+        //               '<div class="info">' +
+        //                 '<div class="title">' +
+        //                 name +
+        //                   '<div class="close" onclick="closeOverlay()" title="닫기"></div>' +
+        //                 '</div>' +
+        //                 '<div class="body">' +
+        //                   '<div class="img">' +
+        //                     `<img src="${imageUrl}" width="73" height="70">` +
+        //                   '</div>' +
+        //                   '<div class="desc">' +
+        //                     detailAddr +
+        //                   '</div>' +
+        //                 '</div>' +
+        //               '</div>' +
+        //             '</div>';
+
+        // // 커스텀 오버레이를 생성합니다
+        // var overlay = new kakao.maps.CustomOverlay({
+        //     content: content,
+        //     map: map,
+        //     position: newPos,
+        //     zIndex: 9999 
+        // });
+
+        // // 커스텀 오버레이를 닫기 위해 호출되는 함수입니다
+        // window.closeOverlay = function() {
+        //     overlay.setMap(null);
+        // }
+
+        // // 마커 위에 커스텀 오버레이를 표시합니다.
+        // overlay.setMap(map);
+
+        // currentOverlay = overlay;
+
+
+        var content = '<div class="custom-overlay" onclick="openPopup()" style="cursor: pointer;">' +
+                      `<h3 style="cursor: pointer;">${data.name}</h3>` +
+                      `<img src="${data.image_url}" style="width: 100%; height: auto; cursor: pointer;">` +
+                      '</div>';
+    
+        var overlay = new kakao.maps.CustomOverlay({
+            content: content,
+            map: map,
+            position: new kakao.maps.LatLng(data.coords.latitude, data.coords.longitude),
+            zIndex: 9999
+        });
+    
+        // 이 오버레이를 글로벌 변수로 저장해 필요할 때 접근할 수 있도록 합니다.
+        currentOverlay = overlay;
+    }
+
     function clearRedMarkers() {
         redMarkers.forEach(marker => marker.setMap(null));
         redMarkers = [];
@@ -29,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
 
     // 마커 생성을 위한 함수 정의
-    function createMarkerAtPosition(position, centerMap = true) {
+    function createMarkerAtPosition(position, name, address, image_url, centerMap = true) {
         //clearRedMarkers();  // 모든 빨간색 마커 제거
         const newPos = new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
         
@@ -37,38 +113,93 @@ document.addEventListener('DOMContentLoaded', function() {
         if (marker) {
             marker.setMap(null);
         }
+
+        // 기존에 표시된 커스텀 오버레이가 있다면 제거
+        if (currentOverlay) {
+            currentOverlay.setMap(null);
+        }
         
         // 새로운 위치에 마커를 생성합니다.
         marker = new kakao.maps.Marker({
             position: newPos,
             map: map
         });
-        
-        // 지도의 중심을 새 위치로 이동합니다.
-        // map.setCenter(newPos);
 
         // 지도의 중심을 새 위치로 이동 옵션에 따라
         if (centerMap) {
             map.setCenter(newPos);
         }
-        
-        // 주소-좌표 변환 객체를 사용하여 주소 정보를 조회합니다.
-        geocoder.coord2Address(newPos.getLng(), newPos.getLat(), function(result, status) {
-            if (status === kakao.maps.services.Status.OK) {
-            // 인포윈도우에 표시될 내용을 생성합니다.
-            var detailAddr = !!result[0].road_address ? '<div>도로명주소 : ' + result[0].road_address.address_name + '</div>' : '';
-            detailAddr += '<div>지번 주소 : ' + result[0].address.address_name + '</div>';
-            
-            var content = '<div class="bAddr">' +
-                            '<span class="title">법정동 주소정보</span>' + 
-                            detailAddr + 
-                            '</div>';
-        
-            // 마커 위에 인포윈도우를 표시합니다.
-            infowindow.setContent(content);
-            infowindow.open(map, marker);
+
+        if(name==null){
+
+            // 주소-좌표 변환 객체를 사용하여 주소 정보를 조회합니다.
+            geocoder.coord2Address(newPos.getLng(), newPos.getLat(), function(result, status) {
+                if (status === kakao.maps.services.Status.OK) {
+
+                    console.log('image_url 11111:',image_url);
+                    
+                    // 인포윈도우에 표시될 내용을 생성합니다.
+                    var detailAddr = !!result[0].road_address ? '<div>도로명주소 : ' + result[0].road_address.address_name + '</div>' : '';
+                    detailAddr += '<div>지번 주소 : ' + result[0].address.address_name + '</div>';
+                    
+                    var content = '<div class="bAddr">' +
+                                    '<span class="title">주소정보</span>' + 
+                                    detailAddr + 
+                                    '</div>';
+                
+                    // 마커 위에 인포윈도우를 표시합니다.
+                    infowindow.setContent(content);
+                    infowindow.open(map, marker);
+                    }
+                    
+            });
+
+        }else{
+
+            var detailAddr = !!address ? '<div>주소 : ' + address + '</div>' : '';
+
+            // 예시 이미지 URL, 실제 사용시에는 적절한 이미지 URL로 대체하세요.
+            var imageUrl = image_url;
+    
+            console.log('image_url:',imageUrl);
+    
+            var content = '<div class="wrap">' +
+                          '<div class="info">' +
+                            '<div class="title">' +
+                            '<div class="title-name"  onclick="openPopup()" style="cursor: pointer;">'+name +'</div>'+
+                              '<div class="close" onclick="closeOverlay()" title="닫기"></div>' +
+                            '</div>' +
+                            '<div class="body">' +
+                              '<div class="img" onclick="openPopup()" style="cursor: pointer;">' +
+                                `<img src="${imageUrl}" width="73" height="70">` +
+                              '</div>' +
+                              '<div class="desc">' +
+                                detailAddr +
+                              '</div>' +
+                            '</div>' +
+                          '</div>' +
+                        '</div>';
+    
+            // 커스텀 오버레이를 생성합니다
+            var overlay = new kakao.maps.CustomOverlay({
+                content: content,
+                map: map,
+                position: newPos,
+                zIndex: 9999 
+            });
+
+            // 커스텀 오버레이를 닫기 위해 호출되는 함수입니다
+            window.closeOverlay = function() {
+                overlay.setMap(null);
             }
-        });
+    
+            // 마커 위에 커스텀 오버레이를 표시합니다.
+            overlay.setMap(map);
+
+            currentOverlay = overlay;
+
+        }
+        
     }
 
     // 검색 버튼 이벤트
@@ -118,9 +249,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // 선택된 마커로 지도 중심 이동
             //map.setCenter(position);
             // 선택된 마커에 대한 상세 정보 표시
-            // 여기에 인포윈도우 설정 등 추가 기능 구현
-            //createMarkerAtPosition(position);
-            createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}},false);
+            
+            createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}}, store.name, store.address, store.image_url,false);
         });
 
         // 마커 배열에 추가
@@ -137,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // // 지도의 중심을 사용자의 위치로 이동
                 // map.setCenter(newPos);
-                createMarkerAtPosition(position,true);
+                createMarkerAtPosition(position,null,null,null,true);
             }, function(error) {
                 console.error('Geolocation 정보를 가져오는데 실패했습니다:', error);
             });
@@ -165,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
             navigator.geolocation.getCurrentPosition(function(position) {
                 // const newPos = new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
                 // map.setCenter(newPos);
-                createMarkerAtPosition(position,true);
+                createMarkerAtPosition(position,null,null,null,true);
             }, function(error) {
                 console.error('Geolocation 정보를 가져오는데 실패했습니다:', error);
             });
@@ -184,28 +314,28 @@ document.addEventListener('DOMContentLoaded', function() {
     searchAddrFromCoords(map.getCenter(), displayCenterInfo);
 
     // 지도를 클릭했을 때 클릭 위치 좌표에 대한 주소정보를 표시하도록 이벤트를 등록합니다
-    kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
-        searchDetailAddrFromCoords(mouseEvent.latLng, function(result, status) {
-            if (status === kakao.maps.services.Status.OK) {
-                var detailAddr = !!result[0].road_address ? '<div>도로명주소 : ' + result[0].road_address.address_name + '</div>' : '';
-                detailAddr += '<div>지번 주소 : ' + result[0].address.address_name + '</div>';
+    // kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+    //     searchDetailAddrFromCoords(mouseEvent.latLng, function(result, status) {
+    //         if (status === kakao.maps.services.Status.OK) {
+    //             var detailAddr = !!result[0].road_address ? '<div>도로명주소 : ' + result[0].road_address.address_name + '</div>' : '';
+    //             detailAddr += '<div>지번 주소 : ' + result[0].address.address_name + '</div>';
                 
-                var content = '<div class="bAddr">' +
-                                '<span class="title">법정동 주소정보</span>' + 
-                                detailAddr + 
-                            '</div>';
+    //             var content = '<div class="bAddr">' +
+    //                             '<span class="title">법정동 주소정보</span>' + 
+    //                             detailAddr + 
+    //                         '</div>';
 
-                console.log("mouseEvent:",mouseEvent);
-                // 마커를 클릭한 위치에 표시합니다 
-                marker.setPosition(mouseEvent.latLng);
-                marker.setMap(map);
+    //             console.log("mouseEvent:",mouseEvent);
+    //             // 마커를 클릭한 위치에 표시합니다 
+    //             marker.setPosition(mouseEvent.latLng);
+    //             marker.setMap(map);
 
-                // 인포윈도우에 클릭한 위치에 대한 법정동 상세 주소정보를 표시합니다
-                infowindow.setContent(content);
-                infowindow.open(map, marker);
-            }   
-        });
-    });
+    //             // 인포윈도우에 클릭한 위치에 대한 법정동 상세 주소정보를 표시합니다
+    //             infowindow.setContent(content);
+    //             infowindow.open(map, marker);
+    //         }   
+    //     });
+    // });
 
     // 중심 좌표나 확대 수준이 변경됐을 때 지도 중심 좌표에 대한 주소 정보를 표시하도록 이벤트를 등록합니다
     kakao.maps.event.addListener(map, 'idle', function() {
@@ -248,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`http://localhost:3008/api/seoul-data?minLat=${swLatLng.getLat()}&minLng=${swLatLng.getLng()}&maxLat=${neLatLng.getLat()}&maxLng=${neLatLng.getLng()}`);
             const data = await response.json();
             if (data && data.data) {
-                data.data.forEach(createRedMarker); // 각 데이터에 대해 마커 생성
+                //data.data.forEach(createRedMarker); // 각 데이터에 대해 마커 생성
                 updateStoreList(data.data); // 화면에 데이터를 업데이트하는 함수
             }
         } catch (error) {
@@ -265,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const listItem = document.createElement('li');
             listItem.innerHTML = `<span style="font-size: 16px;">${store.name}</span><br><span style="font-size: 10px;">${store.address}</span>`;
             listItem.addEventListener('click', function() {
-                createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}}, false);
+                createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}},store.name,store.address,store.image_url, false);
             });
             listElement.appendChild(listItem);
             createRedMarker(store);
@@ -319,6 +449,5 @@ document.addEventListener('DOMContentLoaded', function() {
             endDatePicker.value = startDatePicker.value; // 종료일을 시작일로 재설정
         }
     });
-
 
 });

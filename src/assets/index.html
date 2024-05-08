@@ -3,12 +3,12 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>서울신상</title>
+    <title>서울 신상 빵집</title>
     <link rel="stylesheet" href="css/styles.css">
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=2ef405ac4a76b8b780aeb750dceeec8b&libraries=services"></script>
 </head>
 <body>
-    <h1>서울신상</h1>
+    <h1>서울 신상 빵집</h1>
     <header>
         <!-- 검색창 구간 -->
         <div class="search">
@@ -30,7 +30,7 @@
             <!-- 지도를 표시할 div 입니다 -->
             <div id="map">
                 <div class="hAddr">
-                    <span class="title">지도중심기준 행정동 주소정보</span>
+                    <span class="title">주소정보</span>
                     <span id="centerAddr"></span>
                 </div>
             </div>
@@ -46,11 +46,18 @@
                 <!-- 여기에 가게 정보 항목이 추가됩니다 -->
             </ul>
         </div>
+        <div id="popup">
+            <div id="popup-content">
+                <h1>Details</h1>
+                <p>More content here...</p>
+            </div>
+            <button id="close-popup-btn">Close</button>
+        </div>
     </main>
     <footer>
         <!-- 푸터 구간 -->
         <div class="footer-content">
-            <p>© 2024 서울신상. All rights reserved.</p>
+            <p>© 2024 서울 신상 빵집. All rights reserved.</p>
         </div>
     </footer>
     <script src="script/scripts.js"></script>
