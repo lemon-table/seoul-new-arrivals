@@ -108,7 +108,7 @@ main {
     display: flex;
     align-items: center; /* 세로 정렬을 가운데로 맞춥니다 */
     gap: 10px; /* 요소 사이의 간격을 설정합니다 */
-    width: 60%; /* 필요하다면 너비를 조정하세요 */
+    width: 65%; /* 필요하다면 너비를 조정하세요 */
     margin: 0 auto;
     padding: 10px 0; /* 상하 패딩을 추가할 수 있습니다 */
 }
@@ -148,6 +148,11 @@ main {
     border-color: #333; /* 포커스 시 테두리 색 진하게 변경 */
     outline: none; /* 기본 포커스 테두리 제거 */
 }
+.search .date-label {
+    color: #333; /* 텍스트 색상 조정 */
+    font-weight: bold; /* 폰트 두껍게 */
+}
+
 #relocate {
     background: none;
     border: none;
@@ -194,10 +199,34 @@ main {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
+    overflow: hidden; /* 팝업 외부로 내용이 흘러나가지 않도록 설정 */
+}
+
+#popup h1 {
+    text-align: center;
+    padding-top: 20px;
+    margin: 10px 0 30px 0;
+    font-size: 50px;
 }
 
 #popup-content {
-    padding: 20px;
+    padding: 10px;
+    max-height: 540px; /* 팝업 컨텐츠의 최대 높이. 여기서는 팝업 높이에서 여백을 빼서 계산 */
+    overflow-y: auto; /* 세로 스크롤바를 자동으로 표시하도록 설정 */
+    overflow-x: hidden; /* 가로 스크롤바는 표시하지 않도록 설정 */
+}
+
+#popup button {
+    background-color: #f1f1f1; /* 버튼 배경색 */
+    border: 1px solid #ccc; /* 테두리 색 */
+    border-radius: 5px; /* 테두리 둥글게 */
+    color: #333; /* 글자 색 */
+    cursor: pointer; /* 마우스 오버 시 커서 변경 */
+    transition: background-color 0.3s ease; /* 호버 효과를 위한 전환 */
+}
+
+#popup button:hover {
+    background-color: #ddd; /* 호버 시 배경색 변경 */
 }
 
 #close-popup-btn {

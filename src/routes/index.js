@@ -1,7 +1,7 @@
 import express from "express";
 import UsersRouter from "./users.router.js";
 import AuthRouter from "./auth.router.js";
-import { retrieveAndSaveData,getStoreInfo,getSearchData,getDetailData } from '../services/seoulData.service.js'; 
+import { retrieveAndSaveData,getStoreInfo,getSearchData,getDetailData,createAiPost } from '../services/seoulData.service.js'; 
 
 const router = express.Router();
 
@@ -51,6 +51,17 @@ router.get('/store-details', async (req, res) => {
   } catch (error) {
     console.error('상세 데이터 검색 중 오류 발생:', error);
     res.status(500).json({ message: "상세 데이터 검색 중 오류가 발생했습니다.", error: error.toString() });
+  }
+});
+
+router.get("/content-ai",async(req,res) =>{
+  try {
+    const { name, address, store_opening_date } = req.query; // 검색 조건
+    const result = await createAiPost(name, address, store_opening_date);
+    res.status(200).json({ data : result,message: "AI 데이터가 생성되었습니다." });
+  } catch (error) {
+    console.error('AI 데이터 생성 중 오류 발생:', error);
+    res.status(500).json({ message: "AI 데이터 생성 중 오류가 발생했습니다.", error: error.toString() });
   }
 });
 

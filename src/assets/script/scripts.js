@@ -1,6 +1,154 @@
-// 팝업 열기
-function openPopup() {
-    document.getElementById('popup').style.display = 'block';
+// 팝업 열기 함수
+function openPopup(image_url, addressHtml, store_opening_date, name) {
+    const popup = document.getElementById('popup');
+    const popupContent = document.getElementById('popup-content');
+    popupContent.innerHTML = ''; // 기존 내용을 비우기
+
+    // 팝업 제목 설정
+    const title = document.createElement('h2');
+    title.textContent = name;
+    popupContent.appendChild(title);
+
+    // 이동 가능하도록 드래그 이벤트 추가
+    makeDraggable(popup);
+
+    // 이미지와 주소를 가로로 나열하기 위한 컨테이너
+    const infoContainer = document.createElement('div');
+    infoContainer.style.display = 'flex';
+    infoContainer.style.alignItems = 'center'; // 세로 중앙 정렬
+    infoContainer.style.justifyContent = 'space-between'; // 요소 사이에 공간 분배
+
+    // 이미지 요소 생성
+    const imageElement = document.createElement('img');
+    if (image_url) {
+        imageElement.src = image_url;
+        imageElement.style.width = '200px';
+        imageElement.style.height = 'auto';
+        infoContainer.appendChild(imageElement);
+    } else {
+        const noImageText = document.createElement('p');
+        noImageText.textContent = "이미지 없음";
+        infoContainer.appendChild(noImageText);
+    }
+
+    // 주소 표시 (HTML 태그 제거)
+    const addressElement = document.createElement('div');
+    const temporaryDiv = document.createElement('div'); // 임시 div 사용하여 HTML에서 텍스트 추출
+    temporaryDiv.innerHTML = addressHtml; // HTML 문자열 설정
+    addressElement.textContent = temporaryDiv.textContent || temporaryDiv.innerText || "주소 정보 없음";
+    addressElement.style.marginLeft = '20px'; // 이미지와 주소 사이 간격
+    infoContainer.appendChild(addressElement);
+
+    popupContent.appendChild(infoContainer);
+
+    // 'AI 소개' 소제목 추가
+    const subTitle = document.createElement('h3');
+    subTitle.textContent = 'AI 소개';
+    popupContent.appendChild(subTitle);
+
+    // 사용자 입력을 위한 textarea
+    const textarea = document.createElement('textarea');
+    textarea.placeholder = 'AI가 가게 정보를 분석 중입니다...';
+    textarea.style.width = '100%'; // 컨테이너 전체 너비
+    textarea.style.height = '250px'; // 충분한 입력 공간 확보
+    textarea.style.marginTop = '5px';
+    textarea.style.border = '2px solid #808080'; // 선명한 테두리 추가
+    textarea.readOnly = true; // 편집 금지
+    popupContent.appendChild(textarea);
+
+    // API 호출 로직 추가
+    const queryParams = new URLSearchParams({ name, address: addressElement.textContent, store_opening_date });
+    fetch(`http://localhost:3008/api/content-ai?${queryParams.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            // Markdown to plain text conversion
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = marked.parse(data.data || ''); // marked.js를 사용하여 마크다운을 HTML로 변환
+            formatTextContent(tempDiv); // 텍스트 내용을 포맷팅
+            textarea.value = tempDiv.textContent || tempDiv.innerText || "콘텐츠를 불러오는데 실패했습니다.";
+        })
+        .catch(error => {
+            console.error('API 호출 중 에러 발생:', error);
+            textarea.value = "API 호출 실패";
+        });
+
+    // 팝업 닫기 버튼
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '닫기';
+    closeButton.style.width = '100%'; // 너비를 textarea와 동일하게 설정
+    closeButton.style.height = '50px'; // 높이 설정
+    closeButton.style.fontSize = '16px'; // 글씨 크기 설정
+    closeButton.style.marginTop = '7px'; // 상단 여백 추가
+    closeButton.onclick = function() {
+        popup.style.display = 'none';
+    };
+    popupContent.appendChild(closeButton);
+
+    popup.style.display = 'block';
+}
+
+function formatTextContent(container) {
+    // Heading 태그들을 볼드로 처리하고 문단 사이에 공백 추가
+    const headings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    headings.forEach(heading => {
+        heading.style.fontWeight = 'bold'; // 볼드 스타일 적용
+        const nextSibling = heading.nextSibling;
+        if (nextSibling && nextSibling.nodeType === Node.TEXT_NODE) {
+            // 소제목과 문장 사이에 줄 바꿈 추가
+            nextSibling.textContent = '\n' + nextSibling.textContent;
+        }
+    });
+
+    // 문단들 사이에 공백 추가
+    const paragraphs = container.querySelectorAll('p');
+    paragraphs.forEach((paragraph, index) => {
+        if (index > 0) { // 첫 번째 문단 제외
+            paragraph.textContent = '\n\n' + paragraph.textContent;
+        }
+    });
+}
+
+// 드래그 기능을 위한 함수
+function makeDraggable(element) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+    if (document.getElementById(element.id + "-header")) {
+        // 헤더가 존재하면 헤더에서 드래그
+        document.getElementById(element.id + "-header").onmousedown = dragMouseDown;
+    } else {
+        // 그렇지 않으면 전체 팝업에서 드래그
+        element.onmousedown = dragMouseDown;
+    }
+
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // 마우스 커서 시작 위치를 가져옵니다.
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // 커서가 움직일 때 발생하는 이벤트
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // 마우스 커서가 이동한 위치 계산
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // 팝업의 새 위치 설정
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        // 마우스 버튼이 떼어지면, 이동 이벤트도 중단
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
 }
 
 // 팝업 닫기
@@ -35,67 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 글로벌 변수로 커스텀 오버레이를 추적
     let currentOverlay = null;
 
-    document.getElementById('close-popup-btn').addEventListener('click', closePopup);
-
-    function createCustomOverlay(data) {
-        // var detailAddr = !!address ? '<div>주소 : ' + address + '</div>' : '';
-
-        // // 예시 이미지 URL, 실제 사용시에는 적절한 이미지 URL로 대체하세요.
-        // var imageUrl = image_url;
-
-        // console.log('image_url:',imageUrl);
-
-        // var content = '<div class="wrap">' +
-        //               '<div class="info">' +
-        //                 '<div class="title">' +
-        //                 name +
-        //                   '<div class="close" onclick="closeOverlay()" title="닫기"></div>' +
-        //                 '</div>' +
-        //                 '<div class="body">' +
-        //                   '<div class="img">' +
-        //                     `<img src="${imageUrl}" width="73" height="70">` +
-        //                   '</div>' +
-        //                   '<div class="desc">' +
-        //                     detailAddr +
-        //                   '</div>' +
-        //                 '</div>' +
-        //               '</div>' +
-        //             '</div>';
-
-        // // 커스텀 오버레이를 생성합니다
-        // var overlay = new kakao.maps.CustomOverlay({
-        //     content: content,
-        //     map: map,
-        //     position: newPos,
-        //     zIndex: 9999 
-        // });
-
-        // // 커스텀 오버레이를 닫기 위해 호출되는 함수입니다
-        // window.closeOverlay = function() {
-        //     overlay.setMap(null);
-        // }
-
-        // // 마커 위에 커스텀 오버레이를 표시합니다.
-        // overlay.setMap(map);
-
-        // currentOverlay = overlay;
-
-
-        var content = '<div class="custom-overlay" onclick="openPopup()" style="cursor: pointer;">' +
-                      `<h3 style="cursor: pointer;">${data.name}</h3>` +
-                      `<img src="${data.image_url}" style="width: 100%; height: auto; cursor: pointer;">` +
-                      '</div>';
-    
-        var overlay = new kakao.maps.CustomOverlay({
-            content: content,
-            map: map,
-            position: new kakao.maps.LatLng(data.coords.latitude, data.coords.longitude),
-            zIndex: 9999
-        });
-    
-        // 이 오버레이를 글로벌 변수로 저장해 필요할 때 접근할 수 있도록 합니다.
-        currentOverlay = overlay;
-    }
+    //document.getElementById('close-popup-btn').addEventListener('click', closePopup);
 
     function clearRedMarkers() {
         redMarkers.forEach(marker => marker.setMap(null));
@@ -105,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
 
     // 마커 생성을 위한 함수 정의
-    function createMarkerAtPosition(position, name, address, image_url, centerMap = true) {
+    function createMarkerAtPosition(position, name, address, image_url,image_url2,image_url3,store_opening_date, centerMap = true) {
         //clearRedMarkers();  // 모든 빨간색 마커 제거
         const newPos = new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
         
@@ -131,6 +219,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if(name==null){
+
+            map.setCenter(newPos);
 
             // 주소-좌표 변환 객체를 사용하여 주소 정보를 조회합니다.
             geocoder.coord2Address(newPos.getLng(), newPos.getLat(), function(result, status) {
@@ -160,17 +250,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // 예시 이미지 URL, 실제 사용시에는 적절한 이미지 URL로 대체하세요.
             var imageUrl = image_url;
+
+            var data = { image_url,image_url2,image_url3,name };
     
             console.log('image_url:',imageUrl);
     
             var content = '<div class="wrap">' +
                           '<div class="info">' +
                             '<div class="title">' +
-                            '<div class="title-name"  onclick="openPopup()" style="cursor: pointer;">'+name +'</div>'+
+                            `<div class="title-name"  onclick="openPopup('${image_url}','${detailAddr}','${store_opening_date}','${name}')" style="cursor: pointer;">`+name +'</div>'+
                               '<div class="close" onclick="closeOverlay()" title="닫기"></div>' +
                             '</div>' +
                             '<div class="body">' +
-                              '<div class="img" onclick="openPopup()" style="cursor: pointer;">' +
+                              `<div class="img" onclick="openPopup('${image_url}','${detailAddr}','${store_opening_date}','${name}')" style="cursor: pointer;">` +
                                 `<img src="${imageUrl}" width="73" height="70">` +
                               '</div>' +
                               '<div class="desc">' +
@@ -226,6 +318,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) throw new Error('서버 응답이 올바르지 않습니다.');
             const data = await response.json();
 
+            if (data && data.data) {
+                //data.data.forEach(createRedMarker); // 각 데이터에 대해 마커 생성
+                updateStoreList(data.data,true); // 화면에 데이터를 업데이트하는 함수
+                //createMarkerAtPosition({coords: {latitude: data.coordinates.y, longitude: data.coordinates.x}}, data.name, data.address, data.image_url,data.image_url2,data.image_url3,data.store_opening_date,true);
+            }
+
+            //createMarkerAtPosition({coords: {latitude: data.coordinates.y, longitude: data.coordinates.x}}, data.name, data.address, data.image_url,data.image_url2,data.image_url3,data.store_opening_date,false);
+
             // 여기에서 응답 데이터를 처리 (예: 지도에 마커 추가, 목록 업데이트 등)
             console.log(data); // 콘솔에 결과 출력
         } catch (error) {
@@ -250,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
             //map.setCenter(position);
             // 선택된 마커에 대한 상세 정보 표시
             
-            createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}}, store.name, store.address, store.image_url,false);
+            createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}}, store.name, store.address, store.image_url,store.image_url2,store.image_url3,store.store_opening_date,false);
         });
 
         // 마커 배열에 추가
@@ -267,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // // 지도의 중심을 사용자의 위치로 이동
                 // map.setCenter(newPos);
-                createMarkerAtPosition(position,null,null,null,true);
+                createMarkerAtPosition(position,null,null,null,null,null,null,null,true);
             }, function(error) {
                 console.error('Geolocation 정보를 가져오는데 실패했습니다:', error);
             });
@@ -295,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
             navigator.geolocation.getCurrentPosition(function(position) {
                 // const newPos = new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
                 // map.setCenter(newPos);
-                createMarkerAtPosition(position,null,null,null,true);
+                createMarkerAtPosition(position,null,null,null,null,null,null,null,true);
             }, function(error) {
                 console.error('Geolocation 정보를 가져오는데 실패했습니다:', error);
             });
@@ -379,7 +479,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             if (data && data.data) {
                 //data.data.forEach(createRedMarker); // 각 데이터에 대해 마커 생성
-                updateStoreList(data.data); // 화면에 데이터를 업데이트하는 함수
+                updateStoreList(data.data,false); // 화면에 데이터를 업데이트하는 함수
             }
         } catch (error) {
             console.error('Failed to fetch store data:', error);
@@ -387,15 +487,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 가게 목록
-    function updateStoreList(stores) {
+    function updateStoreList(stores,chk) {
         const listElement = document.getElementById('storeList');
         listElement.innerHTML = ''; // 기존 리스트를 클리어
     
         stores.forEach(store => {
             const listItem = document.createElement('li');
             listItem.innerHTML = `<span style="font-size: 16px;">${store.name}</span><br><span style="font-size: 10px;">${store.address}</span>`;
+            //console.log('store:',store);
             listItem.addEventListener('click', function() {
-                createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}},store.name,store.address,store.image_url, false);
+                createMarkerAtPosition({coords: {latitude: store.coordinates.y, longitude: store.coordinates.x}},store.name,store.address,store.image_url,store.image_url2,store.image_url3,store.store_opening_date, chk);
             });
             listElement.appendChild(listItem);
             createRedMarker(store);

@@ -6,17 +6,19 @@
     <title>서울 신상 빵집</title>
     <link rel="stylesheet" href="css/styles.css">
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=2ef405ac4a76b8b780aeb750dceeec8b&libraries=services"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <h1>서울 신상 빵집</h1>
     <header>
         <!-- 검색창 구간 -->
         <div class="search">
+            <label for="start-date" class="date-label">제과점 시작일</label>
             <input type="date" class="date-picker" id="start-date">
             <input type="date" class="date-picker" id="end-date">
-            <select id="business-status" class="date-picker">
+            <select id="business-status" class="date-picker" disabled>
                 <option value="all">전체</option>
-                <option value="영업/정상">영업중</option>
+                <option value="영업/정상" selected>영업중</option>
                 <option value="폐업">폐업</option>
             </select>
             <input type="text" placeholder="검색어 입력">
@@ -51,7 +53,7 @@
                 <h1>Details</h1>
                 <p>More content here...</p>
             </div>
-            <button id="close-popup-btn">Close</button>
+            <!--<button id="close-popup-btn">Close</button>-->
         </div>
     </main>
     <footer>
