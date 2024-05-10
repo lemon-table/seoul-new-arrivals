@@ -159,6 +159,8 @@ function closePopup() {
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    console.log('DOMContentLoaded 이벤트 시작');
+
     // 검색 버튼 이벤트 리스너 추가
     const searchButton = document.querySelector('button[type="submit"]');
     const inputKeyword = document.querySelector('input[type="text"]');
