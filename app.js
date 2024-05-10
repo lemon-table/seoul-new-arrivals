@@ -15,7 +15,9 @@ const port = process.env.SERVER_PORT;
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static("src/assets"));
+//app.use(express.static("src/assets"));
+// 정적 파일의 루트 경로를 '/'로 설정
+app.use("/", express.static("src/assets"));
 
 app.use("/api", router);
 app.use(ErrorHandlingMiddleware);
