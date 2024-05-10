@@ -37,8 +37,12 @@ app.listen(port, () => {
 });
 
 
+// app.get("/", (req, res) => {
+//     res.sendFile("index.html", { root: "assets" });
+// });
+
 app.get("/", (req, res) => {
-    res.sendFile("index.html", { root: "assets" });
+  res.sendFile(path.join(__dirname, 'src/assets', 'index.html'));
 });
 
 sequelize.sync({ force: false }).then(() => {
