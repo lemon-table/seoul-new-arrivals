@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
             geocoder.coord2Address(newPos.getLng(), newPos.getLat(), function(result, status) {
                 if (status === kakao.maps.services.Status.OK) {
 
-                    console.log('image_url 11111:',image_url);
+                    //console.log('image_url 11111:',image_url);
                     
                     // 인포윈도우에 표시될 내용을 생성합니다.
                     var detailAddr = !!result[0].road_address ? '<div>도로명주소 : ' + result[0].road_address.address_name + '</div>' : '';
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             var data = { image_url,image_url2,image_url3,name };
     
-            console.log('image_url:',imageUrl);
+            //console.log('image_url:',imageUrl);
     
             var content = '<div class="wrap">' +
                           '<div class="info">' +
@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
             //createMarkerAtPosition({coords: {latitude: data.coordinates.y, longitude: data.coordinates.x}}, data.name, data.address, data.image_url,data.image_url2,data.image_url3,data.store_opening_date,false);
 
             // 여기에서 응답 데이터를 처리 (예: 지도에 마커 추가, 목록 업데이트 등)
-            console.log(data); // 콘솔에 결과 출력
+            //console.log(data); // 콘솔에 결과 출력
         } catch (error) {
             console.error('데이터 검색 중 에러 발생:', error);
         }
