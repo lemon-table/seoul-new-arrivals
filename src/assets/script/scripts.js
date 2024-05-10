@@ -58,7 +58,7 @@ function openPopup(image_url, addressHtml, store_opening_date, name) {
 
     // API 호출 로직 추가
     const queryParams = new URLSearchParams({ name, address: addressElement.textContent, store_opening_date });
-    fetch(`http://localhost:3008/api/content-ai?${queryParams.toString()}`)
+    fetch(`https://seoul-bakery.seedtype.com/api/content-ai?${queryParams.toString()}`)
         .then(response => response.json())
         .then(data => {
             // Markdown to plain text conversion
@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             // API 요청 URL 구성
-            const url = new URL('http://localhost:3008/api/search');
+            const url = new URL('https://seoul-bakery.seedtype.com/api/search');
             // URLSearchParams를 사용하여 쿼리 파라미터를 구성
             const params = new URLSearchParams({
                 start_date: startDate,
@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const neLatLng = bounds.getNorthEast();
 
         try {
-            const response = await fetch(`http://localhost:3008/api/seoul-data?minLat=${swLatLng.getLat()}&minLng=${swLatLng.getLng()}&maxLat=${neLatLng.getLat()}&maxLng=${neLatLng.getLng()}`);
+            const response = await fetch(`https://seoul-bakery.seedtype.com/api/seoul-data?minLat=${swLatLng.getLat()}&minLng=${swLatLng.getLng()}&maxLat=${neLatLng.getLat()}&maxLng=${neLatLng.getLng()}`);
             const data = await response.json();
             if (data && data.data) {
                 //data.data.forEach(createRedMarker); // 각 데이터에 대해 마커 생성
@@ -554,22 +554,22 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     //광고 요소를 사이드바에 추가
-    // async function addSideBar() {
-    //     const sidebar = document.querySelector('.sidebar');
+    async function addSideBar() {
+        const sidebar = document.querySelector('.sidebar');
 
-    //     try {
-    //         const response = await fetch(`http://localhost:3008/api/sidebar-ad`);
-    //         const data = await response.json();
-    //         if (data && data.data) {
-    //             const adContainer = document.createElement('div'); // 새로운 div 요소를 생성
-    //             adContainer.innerHTML = data.data; // HTML 컨텐츠로 div를 채움
-    //             sidebar.appendChild(adContainer); // 생성된 div를 사이드바에 추가
-    //         }
-    //     } catch (error) {
-    //         console.error('Failed to addSideBar data:', error);
-    //     }
-    // }
+        try {
+            const response = await fetch(`https://seoul-bakery.seedtype.com/api/sidebar-ad`);
+            const data = await response.json();
+            if (data && data.data) {
+                const adContainer = document.createElement('div'); // 새로운 div 요소를 생성
+                adContainer.innerHTML = data.data; // HTML 컨텐츠로 div를 채움
+                sidebar.appendChild(adContainer); // 생성된 div를 사이드바에 추가
+            }
+        } catch (error) {
+            console.error('Failed to addSideBar data:', error);
+        }
+    }
 
-    // addSideBar();
+    addSideBar();
 
 });
