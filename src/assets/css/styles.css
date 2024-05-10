@@ -14,14 +14,14 @@ body {
 header, footer {
     background-color: #f1f1f1;
     padding: 10px;
-    margin: 0 10vw; /* 좌우 여백 추가 */
+    margin: 0 12vw; /* 좌우 여백 추가 */
     text-align: center;
 }
 main {
     display: flex;
     flex-direction: row;
     padding: 10px;
-    margin: 0 10vw; /* 좌우 여백 추가 */
+    margin: 0 12vw; /* 좌우 여백 추가 */
     text-align: center;
 }
 .info-section {
@@ -233,4 +233,20 @@ main {
     position: absolute; 
     bottom: 10px; 
     right: 10px;
+}
+
+.sidebar {
+    position: fixed;
+    top: 35%;
+    right: 5px;
+    width: 10vw; /* 광고에 맞는 폭 설정 */
+    height: 500px; /* 광고에 맞는 높이 설정 */
+    padding: 10px;
+    background-color: #f8f9fa; /* 배경색 변경 */
+    box-shadow: -2px 0 4px rgba(0,0,0,0.1); /* 더 미세한 그림자 */
+}
+
+/* 메인 콘텐츠와 지도 콘텐츠의 가로 폭을 조정하여 사이드바가 화면을 가리지 않도록 합니다. */
+.map-section, .info-section {
+    width: calc(100% - 320px); /* 사이드바 너비만큼 감소 */
 }

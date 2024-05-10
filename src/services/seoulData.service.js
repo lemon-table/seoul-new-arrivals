@@ -20,6 +20,8 @@ const KAKAO_API_URL = 'https://dapi.kakao.com/v2/local/search/address.json';
 const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID;
 const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
 
+const AD_PUB_CODE = process.env.AD_PUB_CODE;
+
 const API_KEY = process.env.GOOGLE_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
@@ -418,54 +420,28 @@ const getDetailData = async (store_id) => {
 }
 }
 
-// AI 모델을 사용하여 컨텐츠를 생성하는 함수
-// async function generateContentWithAI(promptText) {
-//   try {
-//     const postData = {
-//       prompt: promptText
-//     };
+const getSidebarAd = async () => {
 
-//     const response = await axios.post(apiEndpoint, postData, {
-//       headers: {
-//         'Authorization': `Bearer ${GOOGLE_API_KEY}`,
-//         'Content-Type': 'application/json'
-//       }
-//     });
-
-//     // 응답된 텍스트를 가공하여 HTML 형식으로 변환
-//     const text = response.data.text;
-//     // let outputStr = '';
-
-//     // const lines = text.split('\n');
-//     // for (let line of lines) {
-//     //   if (line.trim()) {
-//     //     const cleanedLine = line.replace('*', '').trim();
-//     //     outputStr += `<p style="font-family: 'Noto Sans Light'; color: #000000;" data-ke-size="size18">${cleanedLine}</p>`;
-//     //   }
-//     // }
-
-//     return text || '조회되는 데이터가 없습니다.';
-//   } catch (error) {
-//     console.error('Error during AI content generation:', error);
-//     return 'AI 컨텐츠 생성 중 오류가 발생했습니다.';
-//   }
-// }
-
-// // 예제 사용
-// async function useOfGenerateContentWithAI(name,address) {
-//   const prompt = `
-//   너는 500년 경력의 꿈해몽 전문가이자 500년 경력의 흡입력 있는 글쓰기를 잘하는 카피라이팅 전문가. 
-//   '교통사고 꿈해몽'이라는 키워드 통해 블로그 형식의 글을 작성하라.
-//   먼저 꿈이 지니는 의미에 대한 흥미로운 소개와 키워드의 꿈 의미를 간략히 적는다.
-//   그 다음 키워드의 꿈이 지니는 다양한 상황별 소개와 상세한 해석 설명하고,
-//   꿈과 연결된 관련번호(1~45 사이 중 5개만)를 꿈별로 알려준다.
-//   그리고 마지막으로 꿈이 우리에게 주는 긍정적인 영향에 대한 작성으로 글을 마무리한다.
-//   `;
-
-//   const content = await generateContentWithAI(prompt);
-
-//   return content;
-// }
+    try {      
+      return `
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-${AD_PUB_CODE}"
+        crossorigin="anonymous"></script>
+        <!-- 워드프레스 사이드바 디스플레이 광고 -->
+        <ins class="adsbygoogle"
+            style="display:block"
+            data-ad-client="ca-pub-${AD_PUB_CODE}"
+            data-ad-slot="9074417304"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      `;
+  } catch (error) {
+      console.error('Error sudebar ad:', error);
+      res.status(500).send('Internal sudebar ad Error');
+  }
+}
 
 // AI 모델을 사용하여 컨텐츠를 생성하는 함수
 async function generateContentWithAI(promptText) {
@@ -519,4 +495,4 @@ async function createAiPost(name,address,store_opening_date) {
   return content;
 }
 
-export { retrieveAndSaveData,getStoreInfo, getSearchData, getDetailData, createAiPost };
+export { retrieveAndSaveData,getStoreInfo, getSearchData, getDetailData, createAiPost, getSidebarAd };

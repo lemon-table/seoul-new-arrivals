@@ -1,7 +1,7 @@
 import express from "express";
 import UsersRouter from "./users.router.js";
 import AuthRouter from "./auth.router.js";
-import { retrieveAndSaveData,getStoreInfo,getSearchData,getDetailData,createAiPost } from '../services/seoulData.service.js'; 
+import { retrieveAndSaveData,getStoreInfo,getSearchData,getDetailData,createAiPost,getSidebarAd } from '../services/seoulData.service.js'; 
 
 const router = express.Router();
 
@@ -62,6 +62,16 @@ router.get("/content-ai",async(req,res) =>{
   } catch (error) {
     console.error('AI 데이터 생성 중 오류 발생:', error);
     res.status(500).json({ message: "AI 데이터 생성 중 오류가 발생했습니다.", error: error.toString() });
+  }
+});
+
+router.get("/sidebar-ad",async(req,res) =>{
+  try {
+    const result = await getSidebarAd();
+    res.status(200).json({ data : result,message: "사이드바 광고 코드 조회 되었습니다." });
+  } catch (error) {
+    console.error('사이드바 광고 코드 생성 중 오류 발생:', error);
+    res.status(500).json({ message: "사이드바 광고 코드 생성 중 오류가 발생했습니다.", error: error.toString() });
   }
 });
 
