@@ -553,21 +553,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 광고 요소를 사이드바에 추가
-    // async function addSideBar() {
-    //     const sidebar = document.querySelector('.sidebar');
+    //광고 요소를 사이드바에 추가
+    async function addSideBar() {
+        const sidebar = document.querySelector('.sidebar');
 
-    //     try {
-    //         const response = await fetch(`http://localhost:3008/api/sidebar-ad`);
-    //         const data = await response.json();
-    //         if (data && data.data) {
-    //             sidebar.appendChild(data.data);
-    //         }
-    //     } catch (error) {
-    //         console.error('Failed to addSideBar data:', error);
-    //     }
-    // }
+        try {
+            const response = await fetch(`http://localhost:3008/api/sidebar-ad`);
+            const data = await response.json();
+            if (data && data.data) {
+                const adContainer = document.createElement('div'); // 새로운 div 요소를 생성
+                adContainer.innerHTML = data.data; // HTML 컨텐츠로 div를 채움
+                sidebar.appendChild(adContainer); // 생성된 div를 사이드바에 추가
+            }
+        } catch (error) {
+            console.error('Failed to addSideBar data:', error);
+        }
+    }
 
-    // addSideBar();
+    addSideBar();
 
 });
