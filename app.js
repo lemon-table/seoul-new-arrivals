@@ -42,8 +42,10 @@ app.listen(port, () => {
 // });
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, 'src/assets', 'index.html'));
-});
+  res.sendFile(path.join(__dirname, 'src', 'assets', 'index.html'));
+})
+
+console.log(`정적 파일 경로: ${path.join(__dirname, 'src', 'assets')}`);
 
 sequelize.sync({ force: false }).then(() => {
   console.log("테이블이 성공적으로 생성되었습니다.");
