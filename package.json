@@ -16,7 +16,7 @@
     "sequelize": "^6.37.2"
   },
   "name": "seoul-new-arrivals",
-  "description": "서울의 새로운 명소들을 소개하는 웹사이트",
+  "description": "서울의 새로운 빵집들을 소개하는 웹사이트",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
